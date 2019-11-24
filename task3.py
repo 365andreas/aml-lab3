@@ -29,7 +29,18 @@ series = pd.read_csv('X_train.csv', header=0, index_col=0, parse_dates=True, squ
 n_samples = series.shape[0]
 stds=[]
 d_list = []
+
+column_names = ['class']
+for j in range(1, 181):
+	c = 'mean_' + str(j)
+	column_names.append(c)
+
+for j in range(1, 181):
+	c = 'std_' + str(j)
+	column_names.append(c)
+
 for i in range(n_samples):
+	print(i)
 	mean_l = []
 	signal = series.iloc[i]
 	signal = signal.dropna()
@@ -38,18 +49,20 @@ for i in range(n_samples):
 	out_t = out.as_dict()['templates']	
 	pd.DataFrame(data=out_t)
 	out_pd = pd.DataFrame(data=out_t)
+	
 
 	mean_l = [y_train_list[i]]
 	means = list(out_pd.mean())
 	for i in means:
 		mean_l.append(i)
-	#std_l = list(out_pd.std())
-	#stds.append(std_l)
+	std_l = list(out_pd.std())
+	for i in std_l:
+		mean_l.append(i)
 	d_list.append(mean_l)
 
 print(d_list)
-df = pd.DataFrame(d_list)
-df.to_csv('mean_values.csv')
+df = pd.DataFrame(d_list, columns=column_names)
+df.to_csv('features.csv')
 
 
 
