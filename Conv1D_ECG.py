@@ -108,7 +108,7 @@ model.add(Dense(64, kernel_initializer='normal', activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(number_of_classes, kernel_initializer='normal', activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy', f1_m])
-checkpointer = ModelCheckpoint(filepath='conv_models/best_model.h5', monitor='val_f1_m', verbose=1,
+checkpointer = ModelCheckpoint(filepath='conv_models/best_model.h5', monitor='val_accuracy', verbose=1,
                                save_best_only=True, mode='max')
 hist = model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=275, epochs=ep, verbose=2, shuffle=True,
                  callbacks=[checkpointer])
@@ -121,35 +121,21 @@ df = pd.DataFrame(change(predictions))
 df.to_csv(path_or_buf='conv_models/Preds_' + str(format(score, '.4f')) + '.csv', index=None, header=None)
 pd.DataFrame(confusion_matrix(change(Y_val), change(predictions))).to_csv(path_or_buf='conv_models/Result_Conf' + str(format(score, '.4f')) + '.csv', index=None, header=None)
 
-# skf = StratifiedKFold(n_splits=2,shuffle=True)
-# target_train = target_train.reshape(size,)
-
-# for i, (train_index, test_index) in enumerate(skf.split(X, target_train)):
-	# print("TRAIN:", train_index, "TEST:", test_index)
-	# X_train = X[train_index, :]
-	# Y_train = Label_set[train_index, :]
-	# X_val = X[test_index, :]
-	# Y_val = Label_set[test_index, :]
-	# model = None
-	# model = create_model()
-	# train_and_evaluate__model(model, X_train, Y_train, X_val, Y_val, i)
-
 # 5. Make predictions
 dependencies = {
      'f1_m': f1_m
 }
 model = load_model('conv_models/best_model.h5', custom_objects=dependencies)
 
-test_set = pd.read_csv("X_test.csv")
-x_test = test_set.drop('id', axis=1)
+x_test = pd.read_csv("X_test.csv")
 
+x_test = imputer.transform(x_test)
 
-# X = (X - X.mean())/(X.std())  #Some normalization here
-# X = np.expand_dims(X, axis=2) #For Keras' data input size - add other dimension
-x_test = scaler.transform(x_test)
+x_test = (x_test - x_test.mean())/(x_test.std())  # Some normalization here
+x_test = np.expand_dims(x_test, axis=2)           # For Keras' data input size - add other dimension
 
-y_test =  model.predict_classes(x_test)
-Id = test_set['id']
-df = pd.DataFrame(Id)
+y_test = model.predict_classes(x_test)
+y_test = pd.DataFrame(y_test, columns=['y'])
+df = pd.DataFrame(list(range(0, 3411)), columns=['id'])
 df.insert(1, "y", y_test)
 df.to_csv('solution.csv', index=False)
